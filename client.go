@@ -682,6 +682,60 @@ func (mc *ModbusClient) WriteRegister(addr uint16, value uint16) (err error) {
 	return
 }
 
+// Writes a single 16-bit register as is, without encode (function code 06).
+func (mc *ModbusClient) WriteRegisterRaw(addr uint16, value []byte) (err error) {
+	var req *pdu
+	var res *pdu
+
+	mc.lock.Lock()
+	defer mc.lock.Unlock()
+
+	// create and fill in the request object
+	req = &pdu{
+		unitId:       mc.unitId,
+		functionCode: fcWriteSingleRegister,
+	}
+
+	// register address
+	req.payload = uint16ToBytes(BIG_ENDIAN, addr)
+	// register value
+	req.payload = append(req.payload, value[0], value[1])
+
+	// run the request across the transport and wait for a response
+	res, err = mc.executeRequest(req)
+	if err != nil {
+		return
+	}
+
+	// validate the response code
+	switch {
+	case res.functionCode == req.functionCode:
+		// expect 4 bytes (2 byte of address + 2 bytes of value)
+		if len(res.payload) != 4 ||
+			// bytes 1-2 should be the register address
+			bytesToUint16(BIG_ENDIAN, res.payload[0:2]) != addr ||
+			// bytes 3-4 should be the value
+			res.payload[2] != value[0] || res.payload[3] != value[1] {
+			err = ErrProtocolError
+			return
+		}
+
+	case res.functionCode == (req.functionCode | 0x80):
+		if len(res.payload) != 1 {
+			err = ErrProtocolError
+			return
+		}
+
+		err = mapExceptionCodeToError(res.payload[0])
+
+	default:
+		err = ErrProtocolError
+		mc.logger.Warningf("unexpected response code (%v)", res.functionCode)
+	}
+
+	return
+}
+
 // Writes multiple 16-bit registers (function code 16).
 func (mc *ModbusClient) WriteRegisters(addr uint16, values []uint16) (err error) {
 	var payload []byte

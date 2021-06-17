@@ -240,3 +240,32 @@ func (decoder) BytesToUint64s(endianness Endianness, wordOrder WordOrder, in []b
 func (decoder) BytesToFloat64s(endianness Endianness, wordOrder WordOrder, in []byte) []float64 {
 	return bytesToFloat64s(endianness, wordOrder, in)
 }
+
+var Encoder = encoder{}
+
+type encoder struct {
+}
+
+func (encoder) Uint16ToBytes(endianness Endianness, in uint16) []byte {
+	return uint16ToBytes(endianness, in)
+}
+
+func (encoder) Uint16sToBytes(endianness Endianness, in []uint16) []byte {
+	return uint16sToBytes(endianness, in)
+}
+
+func (encoder) Uint32ToBytes(endianness Endianness, wordOrder WordOrder, in uint32) []byte {
+	return uint32ToBytes(endianness, wordOrder, in)
+}
+
+func (encoder) Float32ToBytes(endianness Endianness, wordOrder WordOrder, in float32) []byte {
+	return float32ToBytes(endianness, wordOrder, in)
+}
+
+func (encoder) Uint64ToBytes(endianness Endianness, wordOrder WordOrder, in uint64) []byte {
+	return uint64ToBytes(endianness, wordOrder, in)
+}
+
+func (encoder) Float64ToBytes(endianness Endianness, wordOrder WordOrder, in float64) []byte {
+	return float64ToBytes(endianness, wordOrder, in)
+}
